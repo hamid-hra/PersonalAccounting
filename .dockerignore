@@ -1,5 +1,4 @@
 .git
-.env
 data
 backups
 frontend/node_modules
