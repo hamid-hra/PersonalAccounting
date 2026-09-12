@@ -5,52 +5,39 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-accounting}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD را در .env بگذار}
+      POSTGRES_DB: ${POSTGRES_DB:-accounting}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-accounting} -d ${POSTGRES_DB:-accounting}"]
       interval: 5s
       timeout: 5s
       retries: 20
 
-  backend:
-    build: ./backend
+  app:
+    build: .
     restart: unless-stopped
-    # با کاربر میزبان اجرا می‌شود تا فایل‌های نوشته‌شده در data/ متعلق به
-    # خودت باشند، نه root — وگرنه پشتیبان‌گیری و باز کردنشان ممکن نیست.
+    # با کاربر میزبان اجرا می‌شود تا پشتیبان‌های نوشته‌شده در data/ متعلق به خودت باشند
     user: "${APP_UID:-1000}:${APP_GID:-1000}"
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER:-accounting}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-accounting}
+      # اختیاری — خالی بماند، خودش می‌سازد و در دیتابیس نگه می‌دارد
       SECRET_KEY: ${SECRET_KEY:-}
-      SESSION_DAYS: ${SESSION_DAYS:-30}
-      DATA_DIR: /data
-      MARKET_PROVIDER: ${MARKET_PROVIDER:-brsapi}
-      BRSAPI_KEY: ${BRSAPI_KEY:-}
-      BRSAPI_DAILY_QUOTA: ${BRSAPI_DAILY_QUOTA:-1500}
-      BRSAPI_QUOTA_RESERVE: ${BRSAPI_QUOTA_RESERVE:-50}
-      NAVASAN_API_KEY: ${NAVASAN_API_KEY:-}
-      NAVASAN_MONTHLY_QUOTA: ${NAVASAN_MONTHLY_QUOTA:-120}
-      NAVASAN_QUOTA_RESERVE: ${NAVASAN_QUOTA_RESERVE:-10}
     volumes:
+      # فقط برای پشتیبان‌های محلی و وارد کردن فایل‌های نسخه‌های قدیمی.
+      # فایل‌های آپلودشده داخل دیتابیس‌اند.
       - ./data:/data
-
-  frontend:
-    build: ./frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
-    environment:
-      BACKEND_HOST: backend
-      BACKEND_PORT: 8000
     # فقط روی لوکال‌هاست — دادهٔ مالی نباید روی شبکه منتشر شود
     ports:
-      - "127.0.0.1:${WEB_PORT:-8080}:80"
+      - "127.0.0.1:${WEB_PORT:-8080}:8000"
 
 volumes:
   pgdata:

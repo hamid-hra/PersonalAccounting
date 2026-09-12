@@ -1,15 +1,14 @@
 """وام‌ها: تولید جدول اقساط، وضعیت سررسید، و ذخیرهٔ رسیدها."""
 
-import hashlib
 from datetime import date, timedelta
 from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import settings
 from app.enums import InstallmentStatus, LoanStatus
 from app.models import Loan, LoanAttachment, LoanInstallment
+from app.services import filestore
 from app.services.jalali import (
     add_months,
     jalali_parts,
@@ -125,10 +124,10 @@ def upcoming_installments(db: Session, within_days: int = 10) -> list[dict]:
 
 
 def save_receipt(
-    content: bytes, filename: str, content_type: str
+    db: Session, content: bytes, filename: str, content_type: str
 ) -> tuple[str, str, int, str]:
     """
-    رسید را با نام مبتنی بر هش ذخیره می‌کند تا آپلود تکراری فضا نگیرد.
+    رسید را در دیتابیس با نام مبتنی بر هش ذخیره می‌کند تا آپلود تکراری فضا نگیرد.
     خروجی: (نام ذخیره‌شده، mime، حجم، sha256)
     """
     if content_type not in ALLOWED_IMAGE_TYPES:
@@ -136,12 +135,10 @@ def save_receipt(
     if len(content) > MAX_RECEIPT_BYTES:
         raise ValueError("حجم فایل بیش از ۱۰ مگابایت است.")
 
-    digest = hashlib.sha256(content).hexdigest()
-    stored_name = f"{digest}{ALLOWED_IMAGE_TYPES[content_type]}"
-    path = settings.receipts_dir / stored_name
-    if not path.exists():
-        path.write_bytes(content)
-    return stored_name, content_type, len(content), digest
+    stored_name = filestore.put(
+        db, filestore.RECEIPT, content, ALLOWED_IMAGE_TYPES[content_type], content_type
+    )
+    return stored_name, content_type, len(content), stored_name[:64]
 
 
 def delete_receipt_file(db: Session, attachment: LoanAttachment) -> None:
@@ -153,8 +150,7 @@ def delete_receipt_file(db: Session, attachment: LoanAttachment) -> None:
         )
     )
     if others is None:
-        path = settings.receipts_dir / attachment.stored_name
-        path.unlink(missing_ok=True)
+        filestore.delete(db, attachment.stored_name)
 
 
 # ---------------------------------------------------------------- تشخیص خودکار

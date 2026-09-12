@@ -23,7 +23,7 @@ from app.auth import (
 from app.config import settings
 from app.db import Base, get_db
 from app.main import app
-from app.services import appsettings
+from app.services import appsettings, filestore
 
 
 @pytest.fixture(autouse=True)
@@ -186,13 +186,17 @@ def test_http_forged_cookie_rejected(client):
     assert client.get("/api/auth/me").status_code == 401
 
 
-def test_http_receipts_require_login(client):
-    (settings.receipts_dir / ("a" * 64 + ".png")).write_bytes(b"png")
-    url = "/api/files/receipts/" + "a" * 64 + ".png"
+def test_http_receipts_require_login(http_db, client):
+    name = filestore.put(http_db, filestore.RECEIPT, b"png-bytes", ".png", "image/png")
+    http_db.commit()
+    url = f"/api/files/receipts/{name}"
     assert client.get(url).status_code == 401
     client.post("/api/auth/setup", json={"password": "first-pass-123"})
-    assert client.get(url).status_code == 200
-    assert client.get("/api/files/receipts/../../etc/passwd").status_code in {404, 401}
+    r = client.get(url)
+    assert r.status_code == 200
+    assert r.content == b"png-bytes"
+    assert r.headers["content-type"].startswith("image/png")
+    assert client.get("/api/files/receipts/nope.png").status_code == 404
 
 
 def test_http_secrets_never_leave_settings_endpoint(http_db, client):

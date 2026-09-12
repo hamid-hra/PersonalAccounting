@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from app.db import SessionLocal
 from app.models import AppSetting, Category, Rule
 from app.seeds.data import CATEGORIES, DEFAULT_SETTINGS, TYPE_RULES
-from app.services import appsettings
+from app.config import settings
+from app.services import appsettings, filestore
 
 
 def seed_categories(db: Session) -> dict[str, Category]:
@@ -64,7 +65,16 @@ def main() -> None:
         seed_settings(db)
         db.commit()
         moved = appsettings.bootstrap_from_env(db)
+        # فایل‌هایی که نسخه‌های قبلی روی دیسک نگه می‌داشتند → دیتابیس
+        imported = (
+            filestore.import_legacy_dir(db, settings.statements_dir, filestore.STATEMENT)
+            + filestore.import_legacy_dir(db, settings.receipts_dir, filestore.RECEIPT)
+            + filestore.import_legacy_dir(db, settings.wishlist_dir, filestore.WISHLIST)
+        )
+        db.commit()
     print(f"دسته‌ها: {len(CATEGORIES)} — قوانین: {len(TYPE_RULES)}")
+    if imported:
+        print(f"فایل‌های منتقل‌شده از دیسک به دیتابیس: {imported}")
     if moved:
         print(f"تنظیمات منتقل‌شده به دیتابیس: {', '.join(moved)}")
 

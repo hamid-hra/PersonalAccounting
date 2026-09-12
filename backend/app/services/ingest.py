@@ -10,18 +10,17 @@
 
 import hashlib
 import json
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import settings
 from app.enums import Bank, ImportStatus
 from app.importers import detect, get
 from app.importers.base import BankImporter, ParsedStatement, RawTxn
 from app.models import Account, OwnerAlias, StatementImport, Transaction
+from app.services import filestore
 from app.services.categorize import Categorizer
 from app.services.links import detect_links
 from app.services.extract import extract
@@ -48,14 +47,15 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def store_upload(src: Path, original_name: str) -> tuple[Path, str]:
-    """فایل خام را برای آرشیو نگه می‌دارد؛ نام بر پایهٔ هش تا تکراری جمع نشود."""
-    digest = sha256_file(src)
+def store_upload(db: Session, src: Path, original_name: str) -> tuple[str, str]:
+    """فایل خام را برای آرشیو در دیتابیس نگه می‌دارد؛ نام بر پایهٔ هش تا تکراری جمع نشود."""
     suffix = Path(original_name).suffix.lower() or ".xlsx"
-    dest = settings.statements_dir / f"{digest}{suffix}"
-    if not dest.exists():
-        shutil.copy2(src, dest)
-    return dest, digest
+    mime = {
+        ".xls": "application/vnd.ms-excel",
+    }.get(suffix, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    content = src.read_bytes()
+    name = filestore.put(db, filestore.STATEMENT, content, suffix, mime)
+    return name, name[:64]
 
 
 def pick_importer(path: Path, bank: str | None) -> BankImporter:
@@ -286,7 +286,7 @@ def import_statement(
     parsed = importer.parse(tmp_path)
     validation = importer.validate(parsed)
 
-    stored_path, digest = store_upload(tmp_path, original_name)
+    stored_name, digest = store_upload(db, tmp_path, original_name)
     account = resolve_account(db, parsed)
     ensure_owner_aliases(db, parsed)
 
@@ -295,7 +295,7 @@ def import_statement(
         account_id=account.id,
         bank=importer.bank,
         original_name=original_name,
-        stored_path=str(stored_path),
+        stored_path=stored_name,
         file_sha256=digest,
         period_from_jalali=meta.period_from_jalali,
         period_to_jalali=meta.period_to_jalali,

@@ -1,19 +1,18 @@
 """
 پشتیبان‌گیری از داخل خود برنامه.
 
-هر پشتیبان یک پوشه با دو فایل است:
-  • database.sql.gz — خروجی pg_dump
-  • data.tar.gz     — صورتحساب‌های خام و رسیدهای اقساط
+هر پشتیبان یک پوشه با یک فایل است: database.sql.gz — خروجی pg_dump.
+فایل‌های آپلودشده (صورتحساب، رسید، عکس) هم داخل دیتابیس‌اند، پس همین یک
+فایل برای بازیابی کامل کافی است.
 
-فایل‌های خام هم لازم‌اند: بدون آن‌ها اگر دیتابیس را از نو بسازی،
-اسکرین‌شات رسیدها و اکسل‌های اصلی از دست می‌روند.
+پشتیبان‌ها روی دیسک کانتینر می‌مانند که ممکن است پایدار نباشد؛ بعد از
+ساختن، دانلودش کن.
 """
 
 import gzip
 import os
 import shutil
 import subprocess
-import tarfile
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
@@ -58,13 +57,6 @@ def create_backup() -> dict:
             )
         with gzip.open(target / "database.sql.gz", "wb") as fh:
             fh.write(dump.stdout)
-
-        # فایل‌های خام — پوشهٔ backups خودش داخل آرشیو نرود
-        with tarfile.open(target / "data.tar.gz", "w:gz") as tar:
-            for name in ("statements", "receipts"):
-                folder = settings.data_dir / name
-                if folder.exists():
-                    tar.add(folder, arcname=name)
     except Exception:
         shutil.rmtree(target, ignore_errors=True)
         raise

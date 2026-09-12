@@ -5,32 +5,24 @@
 تراکنش بانکی وصلش کرد تا معلوم شود واقعاً چقدر درآمد در برابر برآورد.
 """
 
-import hashlib
-import shutil
 from datetime import date
 from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.api.deps import Auth, DB
-from app.config import settings
 from app.enums import WISH_PRIORITY_LABELS_FA, WISH_PRIORITY_ORDER, WishPriority
 from app.models import Transaction, WishItem
+from app.services import filestore
 from app.services.jalali import parse_jalali_date, to_jalali_str
 
 router = APIRouter()
 
 ALLOWED_IMAGE = {"image/png", "image/jpeg", "image/webp", "image/gif"}
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
-
-
-def images_dir() -> Path:
-    path = settings.data_dir / "wishlist"
-    path.mkdir(parents=True, exist_ok=True)
-    return path
 
 
 def serialize(w: WishItem) -> dict:
@@ -261,14 +253,20 @@ def upload_image(
     if len(data) > MAX_IMAGE_BYTES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "عکس نباید از ۸ مگابایت بزرگ‌تر باشد.")
 
-    digest = hashlib.sha256(data).hexdigest()
     suffix = Path(file.filename or "").suffix.lower() or ".png"
-    name = f"{digest}{suffix}"
-    (images_dir() / name).write_bytes(data)
-
-    item.image_name = name
+    old = item.image_name
+    item.image_name = filestore.put(db, filestore.WISHLIST, data, suffix, file.content_type)
+    if old and old != item.image_name:
+        _drop_image_if_unused(db, old)
     db.commit()
     return serialize(item)
+
+
+def _drop_image_if_unused(db: DB, name: str) -> None:
+    """عکس مشترک بین چند مورد فقط وقتی حذف می‌شود که هیچ‌کس دیگر به آن اشاره نکند."""
+    db.flush()
+    if db.scalar(select(WishItem.id).where(WishItem.image_name == name)) is None:
+        filestore.delete(db, name)
 
 
 @router.get("/{item_id}/image")
@@ -276,10 +274,13 @@ def get_image(item_id: int, db: DB, user: Auth):
     item = db.get(WishItem, item_id)
     if item is None or not item.image_name:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "عکسی نیست.")
-    path = (images_dir() / item.image_name).resolve()
-    if path.parent != images_dir().resolve() or not path.is_file():
+    stored = filestore.get(db, item.image_name)
+    if stored is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "فایل پیدا نشد.")
-    return FileResponse(path)
+    return Response(
+        stored.content, media_type=stored.mime_type,
+        headers={"Cache-Control": "private, max-age=3600"},
+    )
 
 
 @router.delete("/{item_id}")
@@ -287,7 +288,10 @@ def delete_item(item_id: int, db: DB, user: Auth) -> dict:
     item = db.get(WishItem, item_id)
     if item is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "مورد پیدا نشد.")
+    image = item.image_name
     db.delete(item)
+    if image:
+        _drop_image_if_unused(db, image)
     db.commit()
     return {"ok": True}
 

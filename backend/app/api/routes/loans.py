@@ -292,7 +292,7 @@ async def upload_receipt(
     content = await file.read()
     try:
         stored_name, mime, size, digest = svc.save_receipt(
-            content, file.filename or "receipt", file.content_type or ""
+            db, content, file.filename or "receipt", file.content_type or ""
         )
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc

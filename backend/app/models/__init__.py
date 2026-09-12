@@ -1,5 +1,6 @@
 from app.models.core import Account, OwnerAlias, StatementImport, Transaction
 from app.models.debts import Debt, DebtEntry
+from app.models.files import StoredFile
 from app.models.links import TxLink
 from app.models.market import (
     ApiCallLog,
@@ -39,6 +40,7 @@ __all__ = [
     "OwnerAlias",
     "Rule",
     "StatementImport",
+    "StoredFile",
     "Transaction",
     "WishItem",
     "TxLink",

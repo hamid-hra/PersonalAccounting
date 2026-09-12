@@ -1,7 +1,8 @@
 import logging
 
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import (
     accounts,
@@ -58,3 +59,33 @@ app.include_router(files.router, prefix="/api/files", tags=["files"])
 @app.get("/api/health")
 def health() -> JSONResponse:
     return JSONResponse({"status": "ok"})
+
+
+# ---------------------------------------------------------------- سرآیندهای امنیتی
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    if request.url.path.startswith("/api/"):
+        response.headers.setdefault("Cache-Control", "no-store")
+    return response
+
+
+# ---------------------------------------------------------------- فرانت
+# خروجی ساخته‌شدهٔ React کنار بک‌اند سرو می‌شود: یک کانتینر، یک پورت، بدون
+# nginx و بدون نیاز به شبکهٔ بین‌سرویسی. هر مسیر غیر-API به index.html می‌رود.
+_static = settings.static_dir
+if _static is not None:
+    app.mount("/assets", StaticFiles(directory=_static / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def spa(path: str) -> FileResponse:
+        if path.startswith("api/"):
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        candidate = (_static / path).resolve()
+        if path and candidate.is_file() and _static.resolve() in candidate.parents:
+            return FileResponse(candidate)
+        return FileResponse(_static / "index.html", headers={"Cache-Control": "no-cache"})
