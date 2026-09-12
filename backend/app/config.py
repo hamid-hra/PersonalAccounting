@@ -1,9 +1,12 @@
 from pathlib import Path
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    # متغیر محیطی خالی (مثلاً SESSION_DAYS= بدون مقدار) یعنی «پیش‌فرض»، نه خطا
+    model_config = SettingsConfigDict(env_ignore_empty=True)
+
     database_url: str = "postgresql+psycopg://accounting:accounting@db:5432/accounting"
     app_password: str = "change-me-please"
     secret_key: str = "insecure-dev-key"

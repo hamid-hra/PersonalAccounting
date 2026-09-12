@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     # با کاربر میزبان اجرا می‌شود تا فایل‌های نوشته‌شده در data/ متعلق به
     # خودت باشند، نه root — وگرنه پشتیبان‌گیری و باز کردنشان ممکن نیست.
-    user: "${APP_UID}:${APP_GID}"
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     depends_on:
       db:
         condition: service_healthy
@@ -29,7 +29,7 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       APP_PASSWORD: ${APP_PASSWORD}
       SECRET_KEY: ${SECRET_KEY}
-      SESSION_DAYS: ${SESSION_DAYS}
+      SESSION_DAYS: ${SESSION_DAYS:-30}
       DATA_DIR: /data
       MARKET_PROVIDER: ${MARKET_PROVIDER:-brsapi}
       BRSAPI_KEY: ${BRSAPI_KEY:-}
@@ -48,7 +48,7 @@ services:
       - backend
     # فقط روی لوکال‌هاست — دادهٔ مالی نباید روی شبکه منتشر شود
     ports:
-      - "127.0.0.1:${WEB_PORT}:80"
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
 
 volumes:
   pgdata:
