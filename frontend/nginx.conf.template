@@ -10,6 +10,12 @@ server {
 
     client_max_body_size 30m;
 
+    # سرآیندهای امنیتی: نه داخل iframe سایت دیگر، نه حدس نوع فایل، نه نشت آدرس
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "same-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
     # اپ تک‌صفحه‌ای: هر مسیری به index برمی‌گردد
     location / {
         try_files $uri $uri/ /index.html;

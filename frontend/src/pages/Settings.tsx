@@ -332,7 +332,9 @@ export default function Settings() {
             </div>
           )}
           {pwDone && (
-            <p className="mt-3 text-xs text-gain">رمز عوض شد. دفعهٔ بعد با رمز تازه وارد شو.</p>
+            <p className="mt-3 text-xs text-gain">
+              رمز عوض شد. نشست‌های باز روی دستگاه‌های دیگر خارج شدند.
+            </p>
           )}
           <button
             className="btn-primary mt-3"

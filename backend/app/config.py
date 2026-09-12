@@ -8,8 +8,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_ignore_empty=True)
 
     database_url: str = "postgresql+psycopg://accounting:accounting@db:5432/accounting"
-    app_password: str = "change-me-please"
-    secret_key: str = "insecure-dev-key"
+    # کلید امضای نشست. اگر خالی بماند، یک‌بار تصادفی ساخته و در دیتابیس
+    # ذخیره می‌شود؛ رمز ورود هم از داخل خود برنامه ساخته می‌شود (بدون پیش‌فرض).
+    secret_key: str = ""
+    expose_api_docs: bool = False
     session_days: int = 30
     data_dir: Path = Path("/data")
 

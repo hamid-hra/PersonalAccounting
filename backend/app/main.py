@@ -2,7 +2,6 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import (
     accounts,
@@ -16,6 +15,7 @@ from app.api.routes import (
     market,
     contacts,
     debts,
+    files,
     review,
     rules,
     settings_api,
@@ -26,7 +26,13 @@ from app.config import settings
 
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="حسابداری شخصی", docs_url="/api/docs", openapi_url="/api/openapi.json")
+# مستندات API فقط وقتی صریحاً خواسته شود (EXPOSE_API_DOCS=1) منتشر می‌شود
+app = FastAPI(
+    title="حسابداری شخصی",
+    docs_url="/api/docs" if settings.expose_api_docs else None,
+    redoc_url=None,
+    openapi_url="/api/openapi.json" if settings.expose_api_docs else None,
+)
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(accounts.router, prefix="/api/accounts", tags=["accounts"])
@@ -45,8 +51,8 @@ app.include_router(market.router, prefix="/api/market", tags=["market"])
 app.include_router(wishlist.router, prefix="/api/wishlist", tags=["wishlist"])
 app.include_router(settings_api.router, prefix="/api/settings", tags=["settings"])
 
-# رسیدهای آپلودشده — پشت گیت ورود نیستند چون فقط روی لوکال‌هاست سرو می‌شوند
-app.mount("/api/files/receipts", StaticFiles(directory=settings.receipts_dir), name="receipts")
+# رسیدهای آپلودشده — پشت گیت ورود
+app.include_router(files.router, prefix="/api/files", tags=["files"])
 
 
 @app.get("/api/health")

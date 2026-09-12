@@ -12,9 +12,18 @@ from app.services.normalize import fold, fold_name
 router = APIRouter()
 
 
+# کلیدهایی که از این مسیر عمومی خوانده/نوشته نمی‌شوند: هش رمز، کلیدهای
+# سرویس قیمت، کلید امضای نشست. هرکدام مسیر مخصوص خودش را دارد.
+_PROTECTED = appsettings.SECRET_KEYS | {"session_secret"}
+
+
+def _visible(db: DB) -> dict:
+    return {s.key: s.value for s in db.scalars(select(AppSetting)) if s.key not in _PROTECTED}
+
+
 @router.get("")
 def get_settings(db: DB, user: Auth) -> dict:
-    return {s.key: s.value for s in db.scalars(select(AppSetting))}
+    return _visible(db)
 
 
 class SettingsPatch(BaseModel):
@@ -23,6 +32,8 @@ class SettingsPatch(BaseModel):
 
 @router.patch("")
 def update_settings(payload: SettingsPatch, db: DB, user: Auth) -> dict:
+    if _PROTECTED & payload.values.keys():
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "این تنظیم از اینجا قابل تغییر نیست.")
     for key, value in payload.values.items():
         row = db.get(AppSetting, key)
         if row is None:
@@ -30,7 +41,7 @@ def update_settings(payload: SettingsPatch, db: DB, user: Auth) -> dict:
         else:
             row.value = value
     db.commit()
-    return {s.key: s.value for s in db.scalars(select(AppSetting))}
+    return _visible(db)
 
 
 # ---------------------------------------------------------------- خودم
