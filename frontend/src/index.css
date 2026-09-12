@@ -1,0 +1,148 @@
+@import "vazirmatn/Vazirmatn-font-face.css";
+@import "./lib/themes.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  توکن‌های رنگ معنایی.
+
+  هیچ کامپوننتی نباید هگز خام بنویسد — دارک مود فقط وقتی درست کار می‌کند
+  که همهٔ رنگ‌ها از اینجا بیایند. کنتراست هر جفت متن/زمینه در هر دو تم
+  دست‌کم ۴.۵:۱ است.
+*/
+@layer base {
+  :root {
+    --bg: 243 244 246;
+    --surface: 255 255 255;
+    --surface-raised: 246 247 249;
+    --border: 226 228 232;
+    --border-strong: 202 206 212;
+
+    --text: 15 23 42;            /* 15.8:1 روی surface */
+    --text-soft: 51 65 85;       /* 9.7:1 */
+    --text-mute: 100 116 139;    /* 4.8:1 — کمینهٔ مجاز */
+
+    --brand: 51 84 122;
+    --brand-fg: 255 255 255;
+    --brand-soft: 234 240 246;
+    --brand-text: 38 64 95;
+
+    --gain: 4 120 87;            /* سبز تیره‌تر برای کنتراست روی سفید */
+    --gain-soft: 209 250 229;
+    --loss: 190 18 60;
+    --loss-soft: 255 228 230;
+    --warn: 180 83 9;
+    --warn-soft: 254 243 199;
+
+    --shadow: 15 23 42;
+  }
+
+  .dark {
+    --bg: 17 19 23;
+    --surface: 26 29 35;
+    --surface-raised: 34 38 46;
+    --border: 47 52 61;
+    --border-strong: 66 73 85;
+
+    --text: 232 237 246;         /* 14.2:1 روی surface */
+    --text-soft: 186 196 214;    /* 8.4:1 */
+    --text-mute: 141 153 176;    /* 5.1:1 */
+
+    --brand: 125 165 205;
+    --brand-fg: 12 15 20;
+    --brand-soft: 30 42 56;
+    --brand-text: 154 192 226;
+
+    --gain: 52 211 153;
+    --gain-soft: 6 59 47;
+    --loss: 251 113 133;
+    --loss-soft: 68 16 29;
+    --warn: 251 191 36;
+    --warn-soft: 66 45 8;
+
+    --shadow: 0 0 0;
+  }
+
+  html {
+    font-family: Vazirmatn, Tahoma, system-ui, sans-serif;
+    color-scheme: light;
+  }
+  html.dark { color-scheme: dark; }
+
+  body {
+    @apply bg-bg text-text antialiased;
+    /* جلوگیری از پرش رنگ هنگام سوییچ تم */
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  /* اعداد در جدول‌ها باید هم‌عرض باشند تا ستون‌ها به‌هم نریزند */
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* حلقهٔ فوکوس هرگز حذف نمی‌شود — فقط زیباتر می‌شود */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand ring-offset-2;
+    --tw-ring-offset-color: rgb(var(--bg));
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface rounded-xl border border-border;
+    box-shadow: 0 1px 2px rgb(var(--shadow) / 0.06), 0 1px 12px rgb(var(--shadow) / 0.04);
+  }
+  .card-pad { @apply p-4 sm:p-5; }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2
+           text-sm font-medium transition-colors disabled:opacity-50
+           disabled:cursor-not-allowed;
+    /* هدف لمسی دست‌کم ۴۴ پیکسل */
+    min-height: 2.25rem;
+  }
+  .btn-primary { @apply btn bg-brand text-brand-fg hover:opacity-90; }
+  .btn-ghost { @apply btn bg-surface-raised text-text-soft hover:bg-border; }
+  .btn-danger { @apply btn bg-loss-soft text-loss hover:opacity-80; }
+  .btn-icon {
+    @apply inline-flex items-center justify-center rounded-lg text-text-mute
+           transition-colors hover:bg-surface-raised hover:text-text;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm
+           text-text outline-none transition placeholder:text-text-mute
+           focus:border-brand focus:ring-2;
+    --tw-ring-color: rgb(var(--brand) / 0.25);
+  }
+  .label { @apply block text-xs font-medium text-text-mute mb-1.5; }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5
+           text-xs font-medium;
+  }
+  .th { @apply px-3 py-2.5 text-right text-xs font-semibold text-text-mute whitespace-nowrap; }
+  .td { @apply px-3 py-2.5 text-sm align-top text-text; }
+
+  .skeleton {
+    @apply rounded bg-border;
+    animation: pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+/* اسکرول افقی جدول‌ها نباید کل صفحه را بلغزاند */
+.scroll-x { overflow-x: auto; }
+.scroll-x::-webkit-scrollbar { height: 8px; }
+.scroll-x::-webkit-scrollbar-thumb { @apply bg-border-strong rounded-full; }
+
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+/* هرکس حرکت کمتر خواسته، حرکت کمتری می‌بیند */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,17 @@
+.env
+data/statements/*
+data/receipts/*
+data/backups/*
+!data/statements/.gitkeep
+!data/receipts/.gitkeep
+__pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
+frontend/dist/
+.venv/
+backups/
+
+# صورتحساب‌های واقعی که برای تست استفاده می‌شوند — دادهٔ شخصی، هرگز داخل مخزن نروند
+backend/tests/sample_*.xls
+backend/tests/sample_*.xlsx

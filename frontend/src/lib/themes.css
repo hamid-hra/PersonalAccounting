@@ -1,0 +1,208 @@
+/*
+  هشت تم قابل انتخاب.
+
+  هر تم فقط توکن‌های «برند» و ته‌رنگ سطح‌ها را عوض می‌کند.
+  سبز = درآمد و قرمز = هزینه در همهٔ تم‌ها ثابت می‌ماند، چون معنا دارند
+  نه سلیقه — اگر در یک تم عوض شوند، خواندن اعداد سخت و خطرناک می‌شود.
+
+  ── چرا :root پشت انتخابگرها هست؟ ──────────────────────────────────
+  `@layer base` در Tailwind نسخهٔ ۳ لایهٔ واقعی CSS نیست؛ یک دستور
+  زمان‌ساخت است که قوانینش را بی‌لایه و *بعد از* این فایل بیرون می‌دهد.
+  پس `[data-theme="x"]` با ویژگی ۰,۱,۰ با `:root` مساوی می‌شد و چون
+  دیرتر می‌آمد، `:root` برنده می‌شد و تم‌های روشن هیچ اثری نداشتند.
+  با `:root[data-theme]` ویژگی ۰,۲,۰ می‌شود و دیگر به ترتیب فایل
+  وابسته نیست. (حالت تیره تصادفاً کار می‌کرد چون `.dark[data-theme]`
+  از قبل ویژگی بالاتری داشت.)
+*/
+
+/* ---------------------------------------------------- ۱) خنثی حرفه‌ای */
+:root[data-theme="neutral"] {
+  --bg: 234 237 242;
+  --surface: 255 255 255;
+  --surface-raised: 243 246 250;
+  --border: 214 220 230;
+  --border-strong: 186 195 210;
+  --brand: 45 78 120;
+  --brand-fg: 255 255 255;
+  --brand-soft: 226 235 245;
+  --brand-text: 32 58 92;
+}
+:root.dark[data-theme="neutral"] {
+  --bg: 17 19 23;
+  --surface: 26 29 35;
+  --surface-raised: 34 38 46;
+  --border: 47 52 61;
+  --border-strong: 66 73 85;
+  --brand: 125 165 205;
+  --brand-fg: 12 15 20;
+  --brand-soft: 30 42 56;
+  --brand-text: 154 192 226;
+}
+
+/* ---------------------------------------------------- ۲) زمردی */
+:root[data-theme="emerald"] {
+  --bg: 230 243 236;
+  --surface: 255 255 255;
+  --surface-raised: 240 250 244;
+  --border: 200 226 212;
+  --border-strong: 170 205 188;
+  --brand: 4 108 78;
+  --brand-fg: 255 255 255;
+  --brand-soft: 214 240 228;
+  --brand-text: 4 82 60;
+}
+:root.dark[data-theme="emerald"] {
+  --bg: 9 18 15;
+  --surface: 17 30 26;
+  --surface-raised: 24 41 35;
+  --border: 40 62 54;
+  --border-strong: 58 86 75;
+  --brand: 52 190 140;
+  --brand-fg: 6 20 15;
+  --brand-soft: 10 48 38;
+  --brand-text: 110 226 180;
+}
+
+/* ---------------------------------------------------- ۳) آبی نفتی */
+:root[data-theme="navy"] {
+  --bg: 231 238 248;
+  --surface: 255 255 255;
+  --surface-raised: 241 246 252;
+  --border: 202 217 236;
+  --border-strong: 172 193 220;
+  --brand: 30 72 140;
+  --brand-fg: 255 255 255;
+  --brand-soft: 219 231 246;
+  --brand-text: 24 56 110;
+}
+:root.dark[data-theme="navy"] {
+  --bg: 8 14 26;
+  --surface: 16 24 41;
+  --surface-raised: 23 34 55;
+  --border: 39 53 79;
+  --border-strong: 57 75 108;
+  --brand: 116 160 236;
+  --brand-fg: 8 14 26;
+  --brand-soft: 22 40 72;
+  --brand-text: 150 187 248;
+}
+
+/* ---------------------------------------------------- ۴) کهربایی */
+:root[data-theme="amber"] {
+  --bg: 249 241 227;
+  --surface: 255 255 255;
+  --surface-raised: 253 248 238;
+  --border: 232 218 194;
+  --border-strong: 208 189 158;
+  --brand: 154 90 12;
+  --brand-fg: 255 255 255;
+  --brand-soft: 250 235 208;
+  --brand-text: 120 70 8;
+}
+:root.dark[data-theme="amber"] {
+  --bg: 22 17 8;
+  --surface: 33 26 14;
+  --surface-raised: 45 35 19;
+  --border: 63 50 28;
+  --border-strong: 88 70 40;
+  --brand: 226 165 62;
+  --brand-fg: 22 17 8;
+  --brand-soft: 56 41 14;
+  --brand-text: 243 195 110;
+}
+
+/* ---------------------------------------------------- ۵) بنفش */
+:root[data-theme="violet"] {
+  --bg: 238 236 250;
+  --surface: 255 255 255;
+  --surface-raised: 246 245 253;
+  --border: 214 210 238;
+  --border-strong: 186 180 222;
+  --brand: 79 70 200;
+  --brand-fg: 255 255 255;
+  --brand-soft: 230 227 250;
+  --brand-text: 62 54 160;
+}
+:root.dark[data-theme="violet"] {
+  --bg: 14 12 26;
+  --surface: 23 20 40;
+  --surface-raised: 32 28 54;
+  --border: 50 44 78;
+  --border-strong: 70 62 106;
+  --brand: 141 132 248;
+  --brand-fg: 12 10 22;
+  --brand-soft: 38 32 76;
+  --brand-text: 175 168 252;
+}
+
+/* ---------------------------------------------------- ۶) گلبهی */
+:root[data-theme="rose"] {
+  --bg: 250 235 240;
+  --surface: 255 255 255;
+  --surface-raised: 253 244 247;
+  --border: 238 208 219;
+  --border-strong: 220 176 194;
+  --brand: 168 40 82;
+  --brand-fg: 255 255 255;
+  --brand-soft: 250 224 233;
+  --brand-text: 134 30 66;
+}
+:root.dark[data-theme="rose"] {
+  --bg: 24 11 16;
+  --surface: 37 19 26;
+  --surface-raised: 50 27 36;
+  --border: 70 40 52;
+  --border-strong: 97 57 73;
+  --brand: 244 130 168;
+  --brand-fg: 24 11 16;
+  --brand-soft: 62 26 40;
+  --brand-text: 250 168 196;
+}
+
+/* ---------------------------------------------------- ۷) فیروزه‌ای */
+:root[data-theme="teal"] {
+  --bg: 229 244 245;
+  --surface: 255 255 255;
+  --surface-raised: 240 250 251;
+  --border: 198 227 229;
+  --border-strong: 166 203 206;
+  --brand: 12 106 112;
+  --brand-fg: 255 255 255;
+  --brand-soft: 214 240 242;
+  --brand-text: 10 82 88;
+}
+:root.dark[data-theme="teal"] {
+  --bg: 7 20 21;
+  --surface: 14 32 34;
+  --surface-raised: 20 44 47;
+  --border: 36 66 70;
+  --border-strong: 53 92 97;
+  --brand: 60 196 205;
+  --brand-fg: 6 18 19;
+  --brand-soft: 12 52 56;
+  --brand-text: 118 224 231;
+}
+
+/* ---------------------------------------------------- ۸) تک‌رنگ */
+:root[data-theme="mono"] {
+  --bg: 237 237 237;
+  --surface: 255 255 255;
+  --surface-raised: 245 245 245;
+  --border: 217 217 217;
+  --border-strong: 186 186 186;
+  --brand: 60 60 60;
+  --brand-fg: 255 255 255;
+  --brand-soft: 232 232 232;
+  --brand-text: 38 38 38;
+}
+:root.dark[data-theme="mono"] {
+  --bg: 16 16 16;
+  --surface: 26 26 26;
+  --surface-raised: 36 36 36;
+  --border: 54 54 54;
+  --border-strong: 78 78 78;
+  --brand: 200 200 200;
+  --brand-fg: 16 16 16;
+  --brand-soft: 42 42 42;
+  --brand-text: 224 224 224;
+}
